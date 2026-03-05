@@ -26,6 +26,29 @@ export default function RecruiterDashboard() {
           My Jobs
         </Button>
       </Link>
+      <div className="mt-4 pt-4 border-t border-border">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
+          Sample Candidates
+        </p>
+        <Link href="/recruiter/candidates/c1">
+          <Button variant="ghost" className="w-full justify-start text-xs text-muted-foreground hover:text-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            Sarah Johnson
+          </Button>
+        </Link>
+        <Link href="/recruiter/candidates/c2">
+          <Button variant="ghost" className="w-full justify-start text-xs text-muted-foreground hover:text-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            Mike Chen
+          </Button>
+        </Link>
+        <Link href="/recruiter/candidates/c3">
+          <Button variant="ghost" className="w-full justify-start text-xs text-muted-foreground hover:text-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            Emily Rodriguez
+          </Button>
+        </Link>
+      </div>
     </>
   );
 

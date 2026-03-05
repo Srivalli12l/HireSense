@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Award, Mail, Briefcase } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Award, Mail, Briefcase, ExternalLink } from 'lucide-react';
 import { rankCandidatesForJob, type CandidateRankEntry } from '@/lib/api-service';
 
 interface CandidateRankingProps {
@@ -123,13 +125,21 @@ export function CandidateRanking({ jobId }: CandidateRankingProps) {
                   <span className="text-muted-foreground">
                     {candidate.matchedSkills} of {candidate.totalRequired} skills matched
                   </span>
-                  <Badge className={getMatchColor(candidate.matchScore)}>
-                    {candidate.matchScore >= 80
-                      ? 'Excellent'
-                      : candidate.matchScore >= 60
-                      ? 'Good'
-                      : 'Fair'}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getMatchColor(candidate.matchScore)}>
+                      {candidate.matchScore >= 80
+                        ? 'Excellent'
+                        : candidate.matchScore >= 60
+                        ? 'Good'
+                        : 'Fair'}
+                    </Badge>
+                    <Link href={`/recruiter/candidates/${candidate.candidateId}`}>
+                      <Button size="sm" variant="ghost" className="gap-1">
+                        <ExternalLink className="w-3 h-3" />
+                        View
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))

@@ -7,14 +7,14 @@ import { useEffect } from 'react';
 import { Zap, Brain, BarChart3, ArrowRight } from 'lucide-react';
 
 export default function LandingPage() {
-  const { user } = useAuth();
+  const { user, isInitialized } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
+    if (isInitialized && user) {
       router.push(user.role === 'candidate' ? '/candidate/dashboard' : '/recruiter/dashboard');
     }
-  }, [user, router]);
+  }, [user, router, isInitialized]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">

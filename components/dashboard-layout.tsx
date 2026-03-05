@@ -15,17 +15,17 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, title, sidebar }: DashboardLayoutProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, isInitialized } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    if (isInitialized && !user) {
       router.push('/login');
     }
-  }, [user, router]);
+  }, [user, router, isInitialized]);
 
-  if (!user) {
+  if (!isInitialized || !user) {
     return null;
   }
 
