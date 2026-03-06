@@ -8,7 +8,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Resume AI - Smart Resume Screening',
+  title: 'HireSense - Smart Resume Screening',
   description: 'AI-powered resume screening platform for recruiters and job seekers',
   generator: 'v0.app',
   icons: {

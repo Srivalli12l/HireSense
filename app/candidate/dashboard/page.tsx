@@ -34,10 +34,14 @@ export default function CandidateDashboard() {
     <DashboardLayout title="Candidate Dashboard" sidebar={sidebar}>
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Welcome Card */}
-        <Card className="border-border bg-gradient-to-r from-primary/10 to-accent/10">
-          <CardHeader>
-            <CardTitle>Welcome to Resume AI</CardTitle>
-            <CardDescription>
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/20 via-accent/10 to-background overflow-hidden relative group">
+          <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]" />
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 rounded-full blur-3xl" />
+          <CardHeader className="relative z-10">
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Welcome to HireSense
+            </CardTitle>
+            <CardDescription className="text-muted-foreground/80">
               Upload your resume to discover job opportunities that match your skills
             </CardDescription>
           </CardHeader>

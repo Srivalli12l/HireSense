@@ -41,9 +41,8 @@ export function DashboardLayout({ children, title, sidebar }: DashboardLayoutPro
 
       {/* Sidebar */}
       <div
-        className={`fixed md:relative top-0 left-0 h-screen bg-card border-r border-border transition-all duration-300 z-40 ${
-          sidebarOpen ? 'w-64' : 'w-0 md:w-64'
-        } overflow-hidden`}
+        className={`fixed md:relative top-0 left-0 h-screen bg-card border-r border-border transition-all duration-300 z-40 ${sidebarOpen ? 'w-64' : 'w-0 md:w-64'
+          } overflow-hidden`}
       >
         <div className="p-6 h-full flex flex-col">
           {/* Logo */}
@@ -51,7 +50,7 @@ export function DashboardLayout({ children, title, sidebar }: DashboardLayoutPro
             <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
               <span className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">AI</span>
             </div>
-            <span className="font-bold text-foreground">Resume AI</span>
+            <span className="font-bold text-foreground">HireSense</span>
           </Link>
 
           {/* Navigation */}
@@ -67,8 +66,8 @@ export function DashboardLayout({ children, title, sidebar }: DashboardLayoutPro
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
             <Button
-              onClick={() => {
-                logout();
+              onClick={async () => {
+                await logout();
                 router.push('/');
               }}
               variant="ghost"

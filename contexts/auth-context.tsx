@@ -1,6 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
+import { type User as SupabaseUser, type AuthChangeEvent, type Session } from '@supabase/supabase-js';
 
 export type UserRole = 'candidate' | 'recruiter';
 
@@ -16,75 +18,121 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitialized: boolean;
-  login: (email: string, password: string, role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'resume_ai_user';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const isLoggingOut = useRef(false);
 
-  // Initialize user from localStorage on mount
-  useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem(STORAGE_KEY);
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (error) {
-      console.error('Failed to restore user session:', error);
-    } finally {
-      setIsInitialized(true);
-    }
+  // Map Supabase User to our User interface
+  const mapUser = useCallback(async (supabaseUser: SupabaseUser | null): Promise<User | null> => {
+    if (!supabaseUser) return null;
+
+    // Fetch profile from our custom profiles table
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, role')
+      .eq('id', supabaseUser.id)
+      .single();
+
+    return {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      name: profile?.full_name || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || '',
+      role: (profile?.role as UserRole) || (supabaseUser.user_metadata?.role as UserRole) || 'candidate',
+    };
   }, []);
 
-  const login = useCallback(async (email: string, password: string, role: UserRole) => {
+  // Initialize session on mount
+  useEffect(() => {
+    let mounted = true;
+
+    // Use onAuthStateChange with INITIAL_SESSION event instead of getSession()
+    // to avoid the "Lock broken by steal" error from concurrent getSession() calls
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
+      if (!mounted) return;
+      // Skip auth state changes while logging out to prevent bounce-back
+      if (isLoggingOut.current) return;
+
+      if (session?.user) {
+        const mappedUser = await mapUser(session.user);
+        if (mounted) setUser(mappedUser);
+      } else {
+        if (mounted) setUser(null);
+      }
+
+      if (mounted) {
+        setIsLoading(false);
+        setIsInitialized(true);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [mapUser]);
+
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        name: email.split('@')[0],
-        role,
-      };
-      setUser(newUser);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
+        password,
+      });
+
+      if (error) throw error;
+      if (data.user) {
+        const mappedUser = await mapUser(data.user);
+        setUser(mappedUser);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [mapUser]);
 
   const signup = useCallback(async (email: string, password: string, name: string, role: UserRole) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
+      const { data, error } = await supabase.auth.signUp({
         email,
-        name,
-        role,
-      };
-      setUser(newUser);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
+        password,
+        options: {
+          data: {
+            full_name: name,
+            role: role,
+          },
+          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+        }
+      });
+
+      if (error) throw new Error(error.message);
+
+      // Handle case where email confirmation is required
+      if (data.user && !data.session) {
+        throw new Error('Please check your email to confirm your account, then login.');
+      }
+
+      if (data.user) {
+        const mappedUser = await mapUser(data.user);
+        setUser(mappedUser);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [mapUser]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    isLoggingOut.current = true;
     setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
+    await supabase.auth.signOut();
+    isLoggingOut.current = false;
   }, []);
 
   return (

@@ -25,7 +25,7 @@ export default function LandingPage() {
             <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">AI</span>
             </div>
-            <span className="font-bold text-lg text-foreground">Resume AI</span>
+            <span className="font-bold text-lg text-foreground">HireSense</span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition">Features</a>
@@ -55,10 +55,10 @@ export default function LandingPage() {
             AI-powered platform that matches resumes with job opportunities instantly. For recruiters and job seekers alike.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button onClick={() => router.push('/signup')} className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg h-auto">
-              Start Free <ArrowRight className="ml-2 w-5 h-5" />
+            <Button onClick={() => router.push('/signup')} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 text-base h-12 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">
+              Start Free <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
-            <Button variant="outline" onClick={() => router.push('/login')} className="border-border px-8 py-6 text-lg h-auto">
+            <Button variant="outline" onClick={() => router.push('/login')} className="border-border px-6 py-3 text-base h-12 transition-all hover:bg-muted/30 hover:border-primary/50 hover:-translate-y-0.5 hover:shadow-sm">
               Sign In
             </Button>
           </div>
@@ -131,10 +131,10 @@ export default function LandingPage() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card/50 text-center">
         <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
         <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join thousands of recruiters and job seekers using Resume AI to find better matches faster.
+          Join thousands of recruiters and job seekers using HireSense to find better matches faster.
         </p>
-        <Button onClick={() => router.push('/signup')} className="bg-primary hover:bg-primary/90 px-8 py-6 text-lg h-auto">
-          Sign Up Free <ArrowRight className="ml-2 w-5 h-5" />
+        <Button onClick={() => router.push('/signup')} className="bg-primary hover:bg-primary/90 px-6 py-3 text-base h-12 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">
+          Sign Up Free <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </section>
     </div>

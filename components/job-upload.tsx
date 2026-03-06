@@ -42,13 +42,11 @@ export function JobUpload({ onSuccess }: JobUploadProps) {
     setIsLoading(true);
     try {
       const job = await uploadJob({
-        id: '',
         title: formData.title,
         description: formData.description,
-        requiredSkills: formData.requiredSkills.split(',').map(s => s.trim()),
+        requiredSkills: formData.requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
         salaryRange: formData.salaryRange,
         location: formData.location,
-        createdAt: new Date().toISOString(),
       });
 
       setSuccess('Job posting created successfully!');
@@ -61,8 +59,10 @@ export function JobUpload({ onSuccess }: JobUploadProps) {
       });
 
       onSuccess?.(job);
-    } catch (err) {
-      setError('Failed to create job posting. Please try again.');
+    } catch (err: any) {
+      console.error('Job creation error:', err);
+      const msg = err?.message || (typeof err === 'string' ? err : 'Unknown error occurred');
+      setError(msg);
     } finally {
       setIsLoading(false);
     }

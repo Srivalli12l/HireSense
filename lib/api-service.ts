@@ -1,5 +1,5 @@
-// Mock API Service for Resume Screening Platform
-// All functions simulate API calls with realistic delays
+// Real API Service for Resume Screening Platform
+import { supabase, getCachedAccessToken } from '@/lib/supabase';
 
 export interface Resume {
   id: string;
@@ -10,6 +10,7 @@ export interface Resume {
   experience: string;
   education: string;
   summary: string;
+  matchScore?: number;
   uploadedAt: string;
 }
 
@@ -31,10 +32,16 @@ export interface JobMatch {
   missingSkills: string[];
 }
 
-export interface SkillGap {
-  skill: string;
-  importance: 'high' | 'medium' | 'low';
-  recommendation: string;
+export interface SkillGapAnalysisResult {
+  jobRole: string;
+  matchedSkills: string[];
+  missingSkills: string[];
+  matchScore: number;
+  gapScore: number;
+  suggestions: {
+    skill: string;
+    recommendation: string;
+  }[];
 }
 
 export interface CandidateRankEntry {
@@ -42,165 +49,148 @@ export interface CandidateRankEntry {
   candidateName: string;
   email: string;
   matchScore: number;
-  matchedSkills: number;
+  matchedSkills: number; // count
+  matchedSkillsList?: string[];
+  missingSkillsList?: string[];
   totalRequired: number;
   yearsOfExperience: number;
 }
 
-// Sample data
-const sampleResumes: Resume[] = [
-  {
-    id: 'resume-1',
-    candidateName: 'Alice Johnson',
-    email: 'alice@example.com',
-    phone: '+1-555-0123',
-    skills: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'Docker', 'AWS'],
-    experience: '5 years of full-stack development',
-    education: 'BS Computer Science from MIT',
-    summary: 'Experienced full-stack developer with strong problem-solving skills',
-    uploadedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'resume-2',
-    candidateName: 'Bob Smith',
-    email: 'bob@example.com',
-    phone: '+1-555-0456',
-    skills: ['Python', 'Machine Learning', 'TensorFlow', 'Data Analysis', 'SQL'],
-    experience: '3 years in ML/AI development',
-    education: 'MS Data Science from Stanford',
-    summary: 'ML engineer passionate about building intelligent systems',
-    uploadedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+// Helper to get auth headers for API calls
+// Uses cached token to avoid getSession() lock contention
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  // 1. Try cached token first (no lock contention)
+  const cachedToken = getCachedAccessToken();
+  if (cachedToken) {
+    return { 'Authorization': `Bearer ${cachedToken}` };
+  }
 
-const sampleJobs: Job[] = [
-  {
-    id: 'job-1',
-    title: 'Senior Full Stack Developer',
-    description: 'Looking for an experienced developer to lead our web platform',
-    requiredSkills: ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'AWS'],
-    salaryRange: '$120K - $160K',
-    location: 'San Francisco, CA',
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'job-2',
-    title: 'ML Engineer',
-    description: 'Join our AI research team to develop cutting-edge models',
-    requiredSkills: ['Python', 'Machine Learning', 'TensorFlow', 'Data Analysis'],
-    salaryRange: '$130K - $180K',
-    location: 'Mountain View, CA',
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+  // 2. Fallback: single getSession() call (only on first load before cache is populated)
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      return { 'Authorization': `Bearer ${session.access_token}` };
+    }
+  } catch (err) {
+    console.error('Failed to get auth session:', err);
+  }
 
-// API Functions
-export async function uploadResume(resume: Resume): Promise<Resume> {
-  await new Promise(resolve => setTimeout(resolve, 1200));
-  return { ...resume, id: `resume-${Date.now()}` };
+  console.warn('No auth token available for API call');
+  return {};
 }
 
-export async function uploadJob(job: Job): Promise<Job> {
-  await new Promise(resolve => setTimeout(resolve, 1200));
-  return { ...job, id: `job-${Date.now()}` };
+// Parse-only: extract fields from PDF for auto-fill (no DB save)
+export async function parseResume(file: File): Promise<{
+  name: string;
+  email: string;
+  phone: string;
+  skills: string[];
+  experience: string;
+  education: string;
+}> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await fetch('/api/resumes/parse', {
+    method: 'POST',
+    body: formData,
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to parse resume');
+  return data;
+}
+
+// Upload and save resume to Supabase
+export async function uploadResume(formData: FormData): Promise<Resume> {
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch('/api/resumes/upload', {
+    method: 'POST',
+    headers: { ...authHeaders },
+    body: formData,
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to upload resume');
+  return data.resume;
+}
+
+export async function uploadJob(job: Partial<Job>): Promise<Job> {
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch('/api/jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
+    body: JSON.stringify(job),
+  });
+
+  const text = await response.text();
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error('Job API returned non-JSON:', text.substring(0, 500));
+    throw new Error(`Server error (${response.status}). Check terminal for details.`);
+  }
+
+  if (!response.ok) {
+    console.error('Job API error:', response.status, data);
+    throw new Error(data.error || `Failed to upload job (${response.status})`);
+  }
+  return data;
 }
 
 export async function getResumes(): Promise<Resume[]> {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  return sampleResumes;
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch('/api/matching/candidates?all=true', {
+    headers: { ...authHeaders },
+  });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
 }
 
 export async function getJobs(): Promise<Job[]> {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  return sampleJobs;
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch('/api/jobs', {
+    headers: { ...authHeaders },
+  });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
 }
 
 export async function findJobMatches(resumeId: string): Promise<JobMatch[]> {
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  const resume = sampleResumes.find(r => r.id === resumeId);
-  if (!resume) return [];
-
-  return sampleJobs.map(job => {
-    const matched = resume.skills.filter(skill =>
-      job.requiredSkills.some(req =>
-        req.toLowerCase().includes(skill.toLowerCase()) ||
-        skill.toLowerCase().includes(req.toLowerCase())
-      )
-    );
-    const missing = job.requiredSkills.filter(req =>
-      !resume.skills.some(skill =>
-        req.toLowerCase().includes(skill.toLowerCase()) ||
-        skill.toLowerCase().includes(req.toLowerCase())
-      )
-    );
-
-    const matchScore = Math.round((matched.length / job.requiredSkills.length) * 100);
-
-    return {
-      jobId: job.id,
-      jobTitle: job.title,
-      matchScore,
-      matchedSkills: matched,
-      missingSkills: missing,
-    };
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(`/api/matching/jobs?resumeId=${resumeId}`, {
+    headers: { ...authHeaders },
   });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
 }
 
-export async function getSkillGaps(resumeId: string): Promise<SkillGap[]> {
-  await new Promise(resolve => setTimeout(resolve, 1200));
-
-  const resume = sampleResumes.find(r => r.id === resumeId);
-  if (!resume) return [];
-
-  const gaps: SkillGap[] = [
-    {
-      skill: 'Kubernetes',
-      importance: 'high',
-      recommendation: 'Consider learning Kubernetes for container orchestration. Many enterprise roles require this.',
-    },
-    {
-      skill: 'GraphQL',
-      importance: 'medium',
-      recommendation: 'GraphQL is becoming popular for API design. Learn it to stay competitive.',
-    },
-    {
-      skill: 'System Design',
-      importance: 'high',
-      recommendation: 'System design skills are crucial for senior roles. Practice designing scalable systems.',
-    },
-  ];
-
-  return gaps;
+export async function getSkillGaps(resumeId: string, role?: string): Promise<SkillGapAnalysisResult | null> {
+  if (!role) return null;
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(`/api/matching/skill-gaps?resumeId=${resumeId}&role=${encodeURIComponent(role)}`, {
+    headers: { ...authHeaders },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 export async function rankCandidatesForJob(jobId: string): Promise<CandidateRankEntry[]> {
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
-  const job = sampleJobs.find(j => j.id === jobId);
-  if (!job) return [];
-
-  return sampleResumes.map(resume => {
-    const matched = resume.skills.filter(skill =>
-      job.requiredSkills.some(req =>
-        req.toLowerCase().includes(skill.toLowerCase()) ||
-        skill.toLowerCase().includes(req.toLowerCase())
-      )
-    ).length;
-
-    return {
-      candidateId: resume.id,
-      candidateName: resume.candidateName,
-      email: resume.email,
-      matchScore: Math.round((matched / job.requiredSkills.length) * 100),
-      matchedSkills: matched,
-      totalRequired: job.requiredSkills.length,
-      yearsOfExperience: Math.floor(Math.random() * 8) + 2,
-    };
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(`/api/matching/candidates?jobId=${jobId}`, {
+    headers: { ...authHeaders },
   });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
 }
 
 export async function getResumeSummary(resumeId: string): Promise<Resume | null> {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return sampleResumes.find(r => r.id === resumeId) || null;
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(`/api/resumes/summary?id=${resumeId}`, {
+    headers: { ...authHeaders },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }

@@ -1,54 +1,22 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Briefcase, FileText, BookOpen, Award, Mail, ExternalLink } from 'lucide-react';
+import { Briefcase, FileText, BookOpen, Award, Mail, Loader2 } from 'lucide-react';
+import { getResumeSummary } from '@/lib/api-service';
 import Link from 'next/link';
-
-// Mock candidate data
-const mockCandidates: Record<string, any> = {
-  'c1': {
-    id: 'c1',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@example.com',
-    phone: '+1 (555) 123-4567',
-    skills: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'AWS'],
-    experience: '5 years',
-    title: 'Senior Frontend Engineer',
-    summary: 'Experienced full-stack developer with expertise in modern web technologies and cloud infrastructure.',
-    matchScore: 92,
-  },
-  'c2': {
-    id: 'c2',
-    name: 'Mike Chen',
-    email: 'mike.chen@example.com',
-    phone: '+1 (555) 234-5678',
-    skills: ['Python', 'Django', 'PostgreSQL', 'Docker', 'Kubernetes'],
-    experience: '7 years',
-    title: 'Backend Engineer',
-    summary: 'Passionate about building scalable backend systems and mentoring junior developers.',
-    matchScore: 88,
-  },
-  'c3': {
-    id: 'c3',
-    name: 'Emily Rodriguez',
-    email: 'emily.rodriguez@example.com',
-    phone: '+1 (555) 345-6789',
-    skills: ['JavaScript', 'React', 'CSS', 'HTML', 'Figma'],
-    experience: '3 years',
-    title: 'Frontend Developer',
-    summary: 'Creative developer focused on building beautiful and responsive user interfaces.',
-    matchScore: 85,
-  },
-};
+import { ContactCandidateDialog } from '@/components/contact-candidate-dialog';
 
 export default function CandidateSummary() {
   const params = useParams();
   const candidateId = params.candidateId as string;
-  const candidate = mockCandidates[candidateId];
+  const [candidate, setCandidate] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const sidebar = (
     <>
@@ -67,12 +35,47 @@ export default function CandidateSummary() {
     </>
   );
 
-  if (!candidate) {
+  useEffect(() => {
+    const loadCandidate = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getResumeSummary(candidateId);
+        if (data) {
+          setCandidate({
+            ...data,
+            name: data.candidateName,
+            title: data.experience?.includes('Engineer') ? data.experience : 'Candidate', // Simple heuristic
+            matchScore: data.matchScore || 0,
+          });
+        }
+      } catch (err) {
+        setError('Failed to load candidate information');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (candidateId) loadCandidate();
+  }, [candidateId]);
+
+  if (isLoading) {
     return (
       <DashboardLayout title="Candidate Profile" sidebar={sidebar}>
-        <Card className="border-border">
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground">Candidate not found</p>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !candidate) {
+    return (
+      <DashboardLayout title="Candidate Profile" sidebar={sidebar}>
+        <Card className="border-border border-destructive/30 bg-destructive/5">
+          <CardHeader>
+            <CardTitle>Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-destructive">{error || 'Candidate not found'}</p>
           </CardContent>
         </Card>
       </DashboardLayout>
@@ -157,10 +160,11 @@ export default function CandidateSummary() {
 
         {/* Action Buttons */}
         <div className="flex gap-4 pt-4">
-          <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2">
-            <Mail className="w-4 h-4" />
-            Contact Candidate
-          </Button>
+          <ContactCandidateDialog
+            candidateId={candidateId}
+            candidateName={candidate.name}
+            candidateEmail={candidate.email}
+          />
           <Link href="/recruiter/jobs">
             <Button variant="outline" className="border-border hover:bg-primary/5">
               Back to Jobs

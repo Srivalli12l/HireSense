@@ -89,9 +89,8 @@ export function CandidateRanking({ jobId }: CandidateRankingProps) {
             candidates.map((candidate, index) => (
               <div
                 key={candidate.candidateId}
-                className={`p-4 border border-border rounded-lg hover:border-primary/50 transition ${
-                  getRankColor(index) ? 'bg-card/70' : 'bg-card/50'
-                }`}
+                className={`p-4 border border-border rounded-lg hover:border-primary/50 transition ${getRankColor(index) ? 'bg-card/70' : 'bg-card/50'
+                  }`}
               >
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div className="flex-1">
@@ -121,7 +120,7 @@ export function CandidateRanking({ jobId }: CandidateRankingProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-sm mb-3">
                   <span className="text-muted-foreground">
                     {candidate.matchedSkills} of {candidate.totalRequired} skills matched
                   </span>
@@ -130,8 +129,8 @@ export function CandidateRanking({ jobId }: CandidateRankingProps) {
                       {candidate.matchScore >= 80
                         ? 'Excellent'
                         : candidate.matchScore >= 60
-                        ? 'Good'
-                        : 'Fair'}
+                          ? 'Good'
+                          : 'Fair'}
                     </Badge>
                     <Link href={`/recruiter/candidates/${candidate.candidateId}`}>
                       <Button size="sm" variant="ghost" className="gap-1">
@@ -140,6 +139,34 @@ export function CandidateRanking({ jobId }: CandidateRankingProps) {
                       </Button>
                     </Link>
                   </div>
+                </div>
+
+                <div className="space-y-3 pt-3 border-t border-border/50">
+                  {candidate.matchedSkillsList && candidate.matchedSkillsList.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Matched Skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {candidate.matchedSkillsList.map((skill) => (
+                          <Badge key={skill} variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {candidate.missingSkillsList && candidate.missingSkillsList.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Missing Skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {candidate.missingSkillsList.map((skill) => (
+                          <Badge key={skill} variant="secondary" className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))

@@ -15,7 +15,7 @@ interface AuthFormProps {
 
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
-  const { login, signup, isLoading } = useAuth();
+  const { login, signup, user, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -32,7 +32,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           setError('Please fill in all fields');
           return;
         }
-        await login(email, password, role);
+        await login(email, password);
       } else {
         if (!email || !password || !name) {
           setError('Please fill in all fields');
@@ -40,9 +40,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
         await signup(email, password, name, role);
       }
-      router.push(role === 'candidate' ? '/candidate/dashboard' : '/recruiter/dashboard');
-    } catch (err) {
-      setError('Authentication failed. Please try again.');
+
+      // For signup, use the selected role. For login, use the actual role from DB.
+      const userRole = mode === 'signup' ? role : (user?.role || role);
+      router.push(userRole === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard');
+    } catch (err: any) {
+      setError(err?.message || 'Authentication failed. Please try again.');
     }
   };
 
@@ -53,7 +56,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           {mode === 'login' ? 'Welcome Back' : 'Create Account'}
         </CardTitle>
         <CardDescription>
-          {mode === 'login' ? 'Sign in to access your dashboard' : 'Join Resume AI to get started'}
+          {mode === 'login' ? 'Sign in to access your dashboard' : 'Join HireSense to get started'}
         </CardDescription>
       </CardHeader>
       <CardContent>
