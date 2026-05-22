@@ -70,38 +70,58 @@ HireSense is a full-stack AI-powered recruitment platform that automates resume 
 <img width="1600" height="755" alt="Hiresense4" src="https://github.com/user-attachments/assets/e609af4e-9887-4f1f-9131-dc2d6b245bc9" />
 
 ---
+
 ## 🧑‍💻 Installation
 
-Clone the repository:
+### Clone the repository
 
 ```bash
-git clone https://github.com/your-username/hiresense.git
+git clone https://github.com/Srivalli12l/HireSense.git
+```
 
-**Navigate to the project directory:**
+### Navigate to the project directory
+
+```bash
 cd hiresense
+```
 
-**Install dependencies:**
+### Install dependencies
+
+```bash
 npm install
+```
 
-**Create a .env.local file in the root directory and add the following environment variables:**
+### Create a `.env.local` file
+
+```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 GROQ_API_KEY=your_groq_api_key
+```
 
-**Start the development server:**
+### Start the development server
+
+```bash
 npm run dev
+```
 
-**Open your browser and visit:**
+### Open in browser
+
+```bash
 http://localhost:3000
+```
 
 ---
-🌟 Future Improvements
-Advanced recruiter analytics
-Multi-role hiring workflows
-AI interview feedback system
-Resume optimization assistant
+
+## 🌟 Future Improvements
+
+- Advanced recruiter analytics
+- Multi-role hiring workflows
+- AI interview feedback system
+- Resume optimization assistant
 
 ---
-💡 Project Goal
 
-HireSense was designed to improve recruitment efficiency by reducing manual resume screening effort and increasing candidate evaluation accuracy using AI-powered analysis.
+## 💡 Project Goal
+
+HireSense was designed to improve recruitment efficiency by reducing manual resume screening effort and increasing candidate evaluation accuracy using AI-powered analysis.was designed to improve recruitment efficiency by reducing manual resume screening effort and increasing candidate evaluation accuracy using AI-powered analysis.
