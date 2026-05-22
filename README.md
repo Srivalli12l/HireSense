@@ -57,16 +57,16 @@ HireSense is a full-stack AI-powered recruitment platform that automates resume 
 
 ## 📸 Screenshots
 
-###Candiadate Dashboard
+Candiadate Dashboard
 <img width="1919" height="911" alt="Screenshot 2026-03-06 102243" src="https://github.com/user-attachments/assets/df50e271-fae6-4a77-a9b5-9f377ce20794" />
 
-###Analysis Resume 
+Analysis Resume 
 <img width="1600" height="754" alt="Hiresense2" src="https://github.com/user-attachments/assets/10abe155-318f-457d-8411-c3eb67f84ef1" />
 
-###ATS Score Generation
+ATS Score Generation
 <img width="753" height="731" alt="Hiresense3" src="https://github.com/user-attachments/assets/ebe53707-f08e-4b55-a12b-0ea482032639" />
 
-###Candidate Dashboard
+Candidate Dashboard
 <img width="1600" height="755" alt="Hiresense4" src="https://github.com/user-attachments/assets/e609af4e-9887-4f1f-9131-dc2d6b245bc9" />
 
 ---
